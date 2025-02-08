@@ -25,7 +25,7 @@ function QueueList() {
       <table border="1">
         <thead>
           <tr>
-            <th>Queue Number</th>
+            <th>Queues Number</th>
             <th>Paper Name</th>
             <th>Status</th>
           </tr>
