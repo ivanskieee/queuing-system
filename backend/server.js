@@ -30,24 +30,49 @@ app.get("/api/queue", async (req, res, next) => {
 });
 
 // 🔵 Add a new queue item
+// app.post("/api/queue", async (req, res, next) => {
+//   try {
+//     const { paper_name } = req.body;
+//     if (!paper_name?.trim()) {
+//       return res.status(400).json({ error: "Paper name cannot be empty!" });
+//     }
+
+//     const lastItem = await Queue.findOne().sort({ queue_number: -1 });
+//     const newQueueNumber = lastItem ? lastItem.queue_number + 1 : 1;
+
+//     const newQueueItem = new Queue({ queue_number: newQueueNumber, paper_name, status: "Received" });
+//     await newQueueItem.save();
+
+//     res.status(201).json(newQueueItem);
+//   } catch (err) {
+//     next(err);
+//   }
+// });
+// 🔵 Add a new queue item
 app.post("/api/queue", async (req, res, next) => {
   try {
-    const { paper_name } = req.body;
-    if (!paper_name?.trim()) {
-      return res.status(400).json({ error: "Paper name cannot be empty!" });
+    const { paper_name, reason } = req.body;
+    if (!paper_name?.trim() || !reason?.trim()) {
+      return res.status(400).json({ error: "Paper name and reason cannot be empty!" });
     }
 
     const lastItem = await Queue.findOne().sort({ queue_number: -1 });
     const newQueueNumber = lastItem ? lastItem.queue_number + 1 : 1;
 
-    const newQueueItem = new Queue({ queue_number: newQueueNumber, paper_name, status: "Received" });
+    const newQueueItem = new Queue({
+      queue_number: newQueueNumber,
+      paper_name,
+      reason,
+      status: "On Queue",
+    });
+    
     await newQueueItem.save();
-
     res.status(201).json(newQueueItem);
   } catch (err) {
     next(err);
   }
 });
+
 
 // 🟠 Update queue status
 app.put("/api/queue/:id", async (req, res, next) => {

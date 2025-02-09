@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import AdminPanel from "./components/AdminPanel";
-import QueueList from "./components/QueueList";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import AdminPanel from './components/AdminPanel';
 
 function App() {
   return (
     <div>
-      <h1>Queueing System</h1>
-      <QueueList />
       <AdminPanel />
     </div>
   );
