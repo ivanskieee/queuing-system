@@ -182,8 +182,34 @@ function AdminPanel() {
                   {/* Updated At */}
                   <div className="flex flex-col items-center mt-6">
                     <span className="text-3xl text-blue-200 font-bold">
-                      {new Date(firstInQueue.updatedAt).toLocaleString()}
+                      {new Date(firstInQueue.updatedAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}{" "}
                     </span>
+                    <span className="font-semibold uppercase text-sm mt-2">
+                      DATE
+                    </span>
+                    <div className="w-60 h-[1px] bg-blue-200 mt-1"></div>
+
+                    <div className="flex flex-col items-center mt-6">
+                      <span className="text-3xl text-blue-200 font-bold">
+                        {new Date(firstInQueue.updatedAt).toLocaleTimeString(
+                          "en-US",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </div>
+
                     <span className="font-semibold uppercase text-sm mt-2">
                       TIME
                     </span>
@@ -275,7 +301,19 @@ function AdminPanel() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <strong>Created At:</strong>
-                      <span>{new Date(item.createdAt).toLocaleString()}</span>
+                      <span>
+                        {new Date(item.createdAt).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}{" "}
+                        {new Date(item.createdAt).toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })}
+                      </span>
                     </div>
                   </div>
                 </div>
