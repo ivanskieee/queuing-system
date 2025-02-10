@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: null, useUnifiedTopology: null })
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch(err => {
     console.error("❌ MongoDB Connection Error:", err);
@@ -115,12 +115,19 @@ app.delete("/api/queue/serve/:id", async (req, res, next) => {
 // 🔴 Delete all queue items
 app.delete("/api/queue", async (req, res, next) => {
   try {
+    const count = await Queue.countDocuments(); // Check if there are any documents
+
+    if (count === 0) {
+      return res.status(400).json({ message: "Queue is already empty" });
+    }
+
     await Queue.deleteMany({});
-    res.json({ message: "Queue cleared" });
+    res.status(200).json({ message: "Queue cleared" });
   } catch (err) {
     next(err);
   }
 });
+
 
 // 🛑 Global Error Handler
 app.use((err, req, res, next) => {

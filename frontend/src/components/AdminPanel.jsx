@@ -64,18 +64,13 @@ function AdminPanel() {
 
   const updateStatus = async (_id, status) => {
     try {
-      // First, optimistically update the status locally
       const updatedQueue = queue.map((item) =>
         item._id === _id ? { ...item, status, updatedAt: new Date() } : item
       );
       setQueue(updatedQueue);
 
-      // Then, send the request to the server
       await axios.put(`http://localhost:5000/api/queue/${_id}`, { status });
 
-      // After the request is successful, you can leave the local update or fetch the updated data from the server
-      // Optionally, refetch the queue if you prefer server-side synchronization:
-      // fetchQueue();
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -115,21 +110,44 @@ function AdminPanel() {
       confirmButtonText: "Yes, clear it",
       cancelButtonText: "No, keep it",
     });
-
+  
     if (result.isConfirmed) {
       try {
-        await axios.delete("http://localhost:5000/api/queue");
-        setQueue([]);
-        Swal.fire({
-          icon: "success",
-          title: "Queue Cleared",
-          text: "The queue has been cleared successfully.",
-        });
+        const response = await axios.delete("http://localhost:5000/api/queue");
+  
+        if (response.status === 400) {
+          Swal.fire({
+            icon: "info",
+            title: "Queue is Empty",
+            text: "The queue is already empty. Nothing to clear.",
+          });
+        } else if (response.status === 200) {
+          setQueue([]); 
+          Swal.fire({
+            icon: "success",
+            title: "Queue Cleared",
+            text: "The queue has been cleared successfully.",
+          });
+        }
       } catch (error) {
-        console.error("Error clearing queue:", error);
+        if (error.response && error.response.status === 400) {
+          Swal.fire({
+            icon: "info",
+            title: "Queue is Empty",
+            text: "The queue is already empty. Nothing to clear.",
+          });
+        } else {
+          console.error("Error clearing queue:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to connect to the server.",
+          });
+        }
       }
     }
   };
+  
 
   const firstInQueue = queue[0];
 
@@ -300,7 +318,7 @@ function AdminPanel() {
                       <span>{item.reason}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <strong>Created At:</strong>
+                      <strong>Time Created:</strong>
                       <span>
                         {new Date(item.createdAt).toLocaleDateString("en-US", {
                           weekday: "long",
@@ -362,7 +380,7 @@ function AdminPanel() {
               type="text"
               value={paperName}
               onChange={(e) => setPaperName(e.target.value)}
-              placeholder="Enter Paper Name"
+              placeholder="Full Name"
               className="p-2 w-full border  rounded-lg mb-2"
             />
             {/* Reason Select Dropdown */}
@@ -405,10 +423,7 @@ function AdminPanel() {
         {queue.length > 0 && (
           <>
             {[
-              "On Queue",
               "Processing",
-              "Approved",
-              "Rejected",
               "Ready for Pickup",
             ].map((status) => (
               <div key={status} className="mb-3">
