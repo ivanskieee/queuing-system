@@ -27,18 +27,26 @@ function AdminPanel() {
     fetchQueue();
   }, []);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const fetchQueue = async () => {
+    let timeout = setTimeout(() => setIsLoading(true), 1000);
+  
     try {
       const response = await axios.get("http://localhost:5000/api/queue");
+      clearTimeout(timeout);
+      setIsLoading(false);
       setQueue(response.data);
     } catch (error) {
+      clearTimeout(timeout);
+      setIsLoading(false);
       console.error("Error fetching queue:", error);
     }
   };
+  
 
   const addPaper = async () => {
     if (!paperName.trim() || !reason.trim()) {
-      // Use SweetAlert2 for error alert
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -46,22 +54,42 @@ function AdminPanel() {
       });
       return;
     }
-
+  
+    Swal.fire({
+      title: "Adding Paper...",
+      text: "Please wait",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+  
     try {
       const response = await axios.post("http://localhost:5000/api/queue", {
         paper_name: paperName,
         reason: reason,
       });
-
+  
       setQueue((prevQueue) => [...prevQueue, response.data]);
       setPaperName("");
       setReason("");
       setIsModalOpen(false);
+  
+      Swal.fire({
+        icon: "success",
+        title: "Added Successfully",
+        text: "The paper has been added to the queue.",
+      });
     } catch (error) {
       console.error("Error adding paper:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Failed to Add",
+        text: "An error occurred while adding the paper.",
+      });
     }
   };
-
+  
   const updateStatus = async (_id, status) => {
     try {
       // First, optimistically update the status locally
@@ -80,10 +108,9 @@ function AdminPanel() {
       console.error("Error updating status:", error);
     }
   };
-
   const serveNext = async () => {
     const nextItem = queue.find((item) => item.status === "Ready for Pickup");
-
+  
     if (!nextItem) {
       Swal.fire({
         icon: "info",
@@ -92,21 +119,52 @@ function AdminPanel() {
       });
       return;
     }
-
+  
+    const startTime = Date.now();
+  
     try {
-      await axios.delete(
-        `http://localhost:5000/api/queue/serve/${nextItem._id}`
-      );
-
+      await axios.delete(`http://localhost:5000/api/queue/serve/${nextItem._id}`);
+  
+      const duration = Date.now() - startTime;
+      if (duration > 1000) {
+        Swal.fire({
+          title: "Serving Next...",
+          text: "Please wait",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
+      }
+  
       setQueue((prevQueue) =>
         prevQueue.filter((item) => item._id !== nextItem._id)
       );
+  
+      Swal.fire({
+        icon: "success",
+        title: "Served Successfully",
+        text: "The next paper has been served.",
+      });
     } catch (error) {
       console.error("Error serving next:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Failed to Serve",
+        text: "An error occurred while serving the next paper.",
+      });
     }
   };
-
   const clearQueue = async () => {
+    if (queue.length === 0) {
+      Swal.fire({
+        icon: "info",
+        title: "No papers to clear",
+        text: "The queue is already empty.",
+      });
+      return;
+    }
+  
     const result = await Swal.fire({
       icon: "warning",
       title: "Are you sure?",
@@ -115,11 +173,27 @@ function AdminPanel() {
       confirmButtonText: "Yes, clear it",
       cancelButtonText: "No, keep it",
     });
-
+  
     if (result.isConfirmed) {
+      const startTime = Date.now();
+  
       try {
         await axios.delete("http://localhost:5000/api/queue");
+  
+        const duration = Date.now() - startTime;
+        if (duration > 1000) {
+          Swal.fire({
+            title: "Clearing Queue...",
+            text: "Please wait",
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+        }
+  
         setQueue([]);
+  
         Swal.fire({
           icon: "success",
           title: "Queue Cleared",
@@ -127,13 +201,29 @@ function AdminPanel() {
         });
       } catch (error) {
         console.error("Error clearing queue:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Failed to Clear",
+          text: "An error occurred while clearing the queue.",
+        });
       }
     }
   };
+  {isLoading ? (
+    <div className="flex justify-center items-center min-h-screen">
+      <p className="text-xl font-semibold text-blue-600 animate-pulse">Loading...</p>
+    </div>
+  ) : (
+    <div>
+      {/* Your existing UI code here */}
+    </div>
+  )}
+  
 
   const firstInQueue = queue[0];
 
   return (
+    
     <div className="min-h-screen bg-gray-100">
       {/* Navbar */}
       <div className="bg-gradient-to-r from-blue-900 via-blue-850 to-blue-800 text-white p-4 flex items-center uppercase justify-between">
